@@ -6,3 +6,5 @@ SMTP_PORT = 587
 
 SENDER_EMAIL = "your_email@gmail.com"
 SENDER_PASSWORD = "YOUR_APP_PASSWORD"
+
+RECIPIENT_EMAIL = "recipient_email@yahoo.com"

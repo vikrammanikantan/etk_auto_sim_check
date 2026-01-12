@@ -21,37 +21,13 @@ from kuibit.visualize_matplotlib import (
 from scipy.signal import windows
 from scipy.ndimage import gaussian_filter as gf
 
+def get_centroids(h1):
+    return h1.ah.centroid_x.t, h1.ah.centroid_x.y, h1.ah.centroid_y.y, h1.ah.centroid_z.y
 
-def plot_simulation(sim_name, output_num):
-    plt.style.use('plotting.mplstyle')
-    box = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='white', alpha=0.5, ec = 'None', )
-    box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
 
-    sim_dir = "../simulations/"
-    sim_long = SimDir(sim_dir + sim_name)
-    hor_long = sim_long.horizons
-
-    print("Read in", sim_name)
-    # --- Cell ---
-    h1 = hor_long[(0,1)]
-    h2 = hor_long[(1,2)]
-
-    # retrieve horizon positions and separation data
-    h1t = h1.ah.centroid_x.t
-    h1x = h1.ah.centroid_x.y
-    h1y = h1.ah.centroid_y.y
-    h1z = h1.ah.centroid_z.y
-
-    h2t = h2.ah.centroid_x.t
-    h2x = h2.ah.centroid_x.y
-    h2y = h2.ah.centroid_y.y
-    h2z = h2.ah.centroid_z.y
-
-    horizon_separation = compute_separation(h1, h2, resample=True)
-
-    # retrieve mdot data
-    mdot0 = sim_long.ts.scalar["flux_M0[0]"]
-    mdot1 = sim_long.ts.scalar["flux_M0[1]"]
+def get_mdot(sim, h1, h2):
+    mdot0 = sim.ts.scalar["flux_M0[0]"]
+    mdot1 = sim.ts.scalar["flux_M0[1]"]
 
     # time
     t = mdot0.t
@@ -68,11 +44,55 @@ def plot_simulation(sim_name, output_num):
     m1 = m1 / np.mean(mtot)
     m2 = m2 / np.mean(mtot)
 
+    return t, m1, m2, mtot
+
+def interp_2d_data(var, iteration, resolution, xmax, resample = True):
+
+    shape = [resolution, resolution]
+    x0 = [-xmax,-xmax]
+    x1 = [xmax,xmax]
+
+    data = var[iteration]
+    time = var.time_at_iteration(iteration)
+    ## converting data to 2D array
+    data_ufg = data.to_UniformGridData(
+        shape=shape, x0=x0, x1=x1, resample=resample
+    )
+    if resample:
+        new_grid = gd.UniformGrid(shape=shape, x0=x0, x1=x1)
+        data_ufg_resample = data_ufg.resampled(
+            new_grid, piecewise_constant=(not resample)
+        )
+    coordinates = data_ufg_resample.coordinates_from_grid()
+
+    return time, coordinates, data_ufg_resample.data_xyz
+
+
+def plot_simulation(sim_name, output_num):
+    plt.style.use('plotting.mplstyle')
+    box = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='white', alpha=0.5, ec = 'None', )
+    box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
+
+    sim_dir = "../simulations/"
+    sim_long = SimDir(sim_dir + sim_name)
+    hor_long = sim_long.horizons
+    print("Read in", sim_name)
+
+    h1 = hor_long[(0,1)]
+    h2 = hor_long[(1,2)]
+
+    # retrieve horizon positions and separation data
+    h1t, h1x, h1y, h1z = get_centroids(h1)
+    h2t, h2x, h2y, h2z = get_centroids(h2)
+
+    horizon_separation = compute_separation(h1, h2, resample=True)
+
+    t, m1, m2, mtot = get_mdot(sim_long, h1, h2)
+
     # retrieve poyn flux data
-    poyn=sim_long.ts.scalar["outflow_poyn_flux[7]"]
+    poyn = sim_long.ts.scalar["outflow_poyn_flux[7]"]
     poyn_t = poyn.t
     poyn_y = poyn.y / np.mean(mtot)
-
 
     # load latest output only
     sim_dir = "../simulations/"
@@ -83,130 +103,45 @@ def plot_simulation(sim_name, output_num):
     hor = sim.horizons
 
     print("Read in", sim_name)
-    # --- Cell ---
+
     h1 = hor[(0,1)]
     h2 = hor[(1,2)]
 
-    resolution = 500 #args.resolution
-    shape = [resolution, resolution]
 
-    xmax = 75
-    x0 = [-xmax,-xmax]
-    x1 = [xmax,xmax]
-
-    resample = True
-
-    vmin = 1e-5
-    vmax = 1e0
-
-    # retrieve rho xy and xz data
+    # retrieve rho and smallb2 xy and xz vars
     reader_xy = sim.gridfunctions["xy"]
     reader_xz = sim.gridfunctions["xz"]
 
     var_rho_xy = reader_xy["rho_b"]
     var_rho_xz = reader_xz["rho_b"]
-
-
-    # interpolate xy data
-    data = var_rho_xy[var_rho_xy.available_iterations[-1]]
-
-    time = var_rho_xy.available_times[-1]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0, x1=x1, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0, x1=x1)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_rho_xy = data_ufg_resample.data_xyz
-
-
-    # interpolate xz data
-    data = var_rho_xz[var_rho_xz.available_iterations[-1]]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0, x1=x1, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0, x1=x1)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_rho_xz = data_ufg_resample.data_xyz
-
-    # get smallb2 data
     var_smallb2_xy = reader_xy["smallb2"]
     var_smallb2_xz = reader_xz["smallb2"]
 
-    # interpolate xy data
-    data = var_smallb2_xy[var_smallb2_xy.available_iterations[-1]]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0, x1=x1, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0, x1=x1)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_smallb2_xy = data_ufg_resample.data_xyz
 
+    # get interpolated data
+    resolution = 500 
+    shape = [resolution, resolution]
+    xmax = 75
+    x0 = [-xmax,-xmax]
+    x1 = [xmax,xmax]
+    resample = True
 
-    # interpolate xz data
-    data = var_smallb2_xz[var_smallb2_xz.available_iterations[-1]]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0, x1=x1, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0, x1=x1)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_smallb2_xz = data_ufg_resample.data_xyz
+    time, coordinates, data_rho_xy = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[-1], resolution, xmax, resample)
+
+    data_rho_xz = interp_2d_data(var_rho_xz, var_rho_xz.available_iterations[-1], resolution, xmax, resample)[2]
+    data_smallb2_xy = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[-1], resolution, xmax, resample)[2]
+    data_smallb2_xz = interp_2d_data(var_smallb2_xz, var_smallb2_xz.available_iterations[-1], resolution, xmax, resample)[2]
 
     # zoomed data
     xmax = 25
     x0_zoom = [-xmax,-xmax]
     x1_zoom = [xmax,xmax]
 
-    data = var_rho_xy[var_rho_xy.available_iterations[-1]]
-
-    time = var_rho_xy.available_times[-1]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0_zoom, x1=x1_zoom, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0_zoom, x1=x1_zoom)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_rho_xy_zoom = data_ufg_resample.data_xyz
-
-    data = var_smallb2_xy[var_smallb2_xy.available_iterations[-1]]
-    ## converting data to 2D array
-    data_ufg = data.to_UniformGridData(
-        shape=shape, x0=x0_zoom, x1=x1_zoom, resample=resample
-    )
-    if resample:
-        new_grid = gd.UniformGrid(shape=shape, x0=x0_zoom, x1=x1_zoom)
-        data_ufg_resample = data_ufg.resampled(
-            new_grid, piecewise_constant=(not resample)
-        )
-    coordinates = data_ufg_resample.coordinates_from_grid()
-    data_smallb2_xy_zoom = data_ufg_resample.data_xyz
+    data_rho_xy_zoom = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[-1], resolution, xmax, resample)[2]
+    data_smallb2_xy_zoom = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[-1], resolution, xmax, resample)[2]
 
 
-    # make figure
-
+    #### MAKING THE FIGURE ####
     fig = plt.figure(figsize=(8.5, 11))
 
     plt.tight_layout()
@@ -267,7 +202,6 @@ def plot_simulation(sim_name, output_num):
     # plotting rho
     vmin = 1e-5
     vmax = 1e0
-
 
     ax = rho_axs[0]
     im = ax.imshow(data_rho_xy_zoom, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
