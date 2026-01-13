@@ -73,7 +73,7 @@ def plot_simulation(sim_name, output_num):
     box = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='white', alpha=0.5, ec = 'None', )
     box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
 
-    sim_dir = "../simulations/"
+    sim_dir = "/scratch/09313/vikram10/simulations/"
     sim_long = SimDir(sim_dir + sim_name)
     hor_long = sim_long.horizons
     print("Read in", sim_name)
@@ -95,10 +95,6 @@ def plot_simulation(sim_name, output_num):
     poyn_y = poyn.y / np.mean(mtot)
 
     # load latest output only
-    sim_dir = "../simulations/"
-    sim_name = "DISK_A20_E015"
-    output_num = 123
-
     sim = SimDir(sim_dir + sim_name + "/output-%04d" % output_num)
     hor = sim.horizons
 
@@ -175,7 +171,7 @@ def plot_simulation(sim_name, output_num):
 
     ax.plot(horizon_separation, color='k', lw=1.5)
     ax.set_ylim(0, 25)
-    ax.set_xlabel('$t \, [M]$')
+    ax.set_xlabel(r'$t \, [M]$')
     ax.set_ylabel('Separation [M]')
     ax.yaxis.set_label_position("right")
     ax.yaxis.tick_right()
@@ -193,8 +189,8 @@ def plot_simulation(sim_name, output_num):
     # plotting poynting flux
     ax = tseries_axs[1]
     ax.plot(poyn_t, poyn_y, color='m', lw=1.5)
-    ax.set_xlabel('$t \, [M]$')
-    ax.set_ylabel('$L_{poyn}$')
+    ax.set_xlabel(r'$t \, [M]$')
+    ax.set_ylabel(r'$L_{poyn}$')
     ax.set_ylim(0, 0.01)
 
     tseries.subplots_adjust(bottom=0.15, wspace=0.01, hspace = 0.3)

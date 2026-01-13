@@ -15,7 +15,7 @@ from email_config import (
 import sys
 
 sim_name = sys.argv[1]
-output_num = sys.argv[2]
+output_num = int(sys.argv[2])
 
 plotting.plot_simulation(sim_name, output_num)
 
