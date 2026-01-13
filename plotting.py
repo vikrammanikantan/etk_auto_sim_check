@@ -38,13 +38,13 @@ def get_mdot(sim, h1, h2):
 
     # sum and normalize
     mtot = m1 + m2
-    mtot = mtot / np.mean(mtot)
+    mtot_new = mtot / np.mean(mtot)
 
     # normalize individual timeseries
     m1 = m1 / np.mean(mtot)
     m2 = m2 / np.mean(mtot)
 
-    return t, m1, m2, mtot
+    return t, m1, m2, mtot_new
 
 def interp_2d_data(var, iteration, resolution, xmax, resample = True):
 
@@ -87,6 +87,8 @@ def plot_simulation(sim_name, output_num):
 
     horizon_separation = compute_separation(h1, h2, resample=True)
 
+    binary_sep = horizon_separation.y[-1]
+
     t, m1, m2, mtot = get_mdot(sim_long, h1, h2)
 
     # retrieve poyn flux data
@@ -117,7 +119,7 @@ def plot_simulation(sim_name, output_num):
     # get interpolated data
     resolution = 500 
     shape = [resolution, resolution]
-    xmax = 75
+    xmax = 3 * binary_sep
     x0 = [-xmax,-xmax]
     x1 = [xmax,xmax]
     resample = True
@@ -129,7 +131,7 @@ def plot_simulation(sim_name, output_num):
     data_smallb2_xz = interp_2d_data(var_smallb2_xz, var_smallb2_xz.available_iterations[-1], resolution, xmax, resample)[2]
 
     # zoomed data
-    xmax = 25
+    xmax = binary_sep
     x0_zoom = [-xmax,-xmax]
     x1_zoom = [xmax,xmax]
 
@@ -159,8 +161,8 @@ def plot_simulation(sim_name, output_num):
     ax.plot(h2x, h2y, color='r', lw=1.5)
     ax.set_xlabel('x [M]')
     ax.set_ylabel('y [M]')
-    ax.set_xlim([-10, 10])
-    ax.set_ylim([-10, 10])
+    ax.set_xlim([-0.75*binary_sep, 0.75*binary_sep])
+    ax.set_ylim([-0.75*binary_sep, 0.75*binary_sep])
     ax.set_aspect('equal', 'box')
     circle1 = plt.Circle((h1x[-1], h1y[-1]), 0.5, color='k', zorder  = 2)
     ax.add_patch(circle1)
@@ -170,7 +172,7 @@ def plot_simulation(sim_name, output_num):
     ax = hor_axs[1]
 
     ax.plot(horizon_separation, color='k', lw=1.5)
-    ax.set_ylim(0, 25)
+    ax.set_ylim(0, 1.25*binary_sep)
     ax.set_xlabel(r'$t \, [M]$')
     ax.set_ylabel('Separation [M]')
     ax.yaxis.set_label_position("right")
@@ -198,9 +200,10 @@ def plot_simulation(sim_name, output_num):
     # plotting rho
     vmin = 1e-5
     vmax = 1e0
-
+    rho_max = 0.14857958181952735
+    rho_max = 0.07747234381778716
     ax = rho_axs[0]
-    im = ax.imshow(data_rho_xy_zoom, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
+    im = ax.imshow(data_rho_xy_zoom/rho_max, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$y$ [M]')
     arg_time1 = np.argmin(np.abs(h1t - time))
@@ -211,7 +214,7 @@ def plot_simulation(sim_name, output_num):
     ax.add_patch(circle2)
 
     ax = rho_axs[1]
-    im = ax.imshow(data_rho_xy, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
+    im = ax.imshow(data_rho_xy/rho_max, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
     ax.set_xlabel(r'$x$ [M]')
     circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), 0.5, color='k', zorder  = 2)
     ax.add_patch(circle1)
@@ -219,7 +222,7 @@ def plot_simulation(sim_name, output_num):
     ax.add_patch(circle2)
 
     ax = rho_axs[2]
-    im2 = ax.imshow(data_rho_xz, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
+    im2 = ax.imshow(data_rho_xz/rho_max, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$z$ [M]')
     ax.yaxis.set_label_position("right")
