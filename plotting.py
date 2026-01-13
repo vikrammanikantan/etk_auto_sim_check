@@ -110,7 +110,7 @@ def plot_simulation(sim_name, output_num):
     box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
 
     sim_dir = "/scratch/09313/vikram10/simulations/"
-    sim_dir = "/home/vik/code/simulations/"
+    #sim_dir = "/home/vik/code/simulations/"
     sim_long = SimDir(sim_dir + sim_name)
     hor_long = sim_long.horizons
     print("Read in", sim_name)
