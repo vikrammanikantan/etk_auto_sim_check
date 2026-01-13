@@ -46,7 +46,7 @@ def get_mdot(sim, h1, h2):
 
     return t, m1, m2, mtot_new
 
-def get_mhill(sim_dir, output_num):
+def get_mhill(sim_dir, sim_name, output_num):
 
     time = None
     vol1 = None
@@ -57,7 +57,7 @@ def get_mhill(sim_dir, output_num):
     
     for j in range(0,output_num):
         # print(j)
-        path = sim_dir + "/output-00%.2d/disk/volume_integrals-GRMHD.asc"%j
+        path = sim_dir + sim_name + "/output-00%.2d/%s/volume_integrals-GRMHD.asc"%(j, sim_name)
 
         try:
             f = open(path, 'r')
@@ -128,7 +128,7 @@ def plot_simulation(sim_name, output_num):
 
     t, m1, m2, mtot = get_mdot(sim_long, h1, h2)
 
-    time, vol1, vol2 = get_mhill(sim_dir + sim_name, output_num)
+    time, vol1, vol2 = get_mhill(sim_dir, sim_name, output_num)
 
     # retrieve poyn flux data
     poyn = sim_long.ts.scalar["outflow_poyn_flux[7]"]
