@@ -46,6 +46,42 @@ def get_mdot(sim, h1, h2):
 
     return t, m1, m2, mtot_new
 
+def get_mhill(sim_dir, output_num):
+
+    time = None
+    vol1 = None
+    vol2 = None
+    empty = True
+
+    print(sim_dir)
+    
+    for j in range(0,output_num):
+        # print(j)
+        path = sim_dir + "/output-00%.2d/disk/volume_integrals-GRMHD.asc"%j
+
+        try:
+            f = open(path, 'r')
+        except:
+            print("Data not found, output: ", j)
+            continue
+
+        data = np.genfromtxt(f, delimiter=' ')
+        f.close()
+        if empty:
+            time = data[:,0]
+            vol1 = data[:,1]
+            vol2 = data[:,2]
+            empty = False
+        else:
+            time = np.concatenate((time, data[:, 0]), dtype=float)
+            vol1 = np.concatenate((vol1, data[:, 1]), dtype=float)
+            vol2 = np.concatenate((vol2, data[:, 2]), dtype=float)
+
+
+    vol_norm = np.mean(vol1 + vol2)
+
+    return time, vol1/vol_norm, vol2/vol_norm
+
 def interp_2d_data(var, iteration, resolution, xmax, resample = True):
 
     shape = [resolution, resolution]
@@ -74,6 +110,7 @@ def plot_simulation(sim_name, output_num):
     box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
 
     sim_dir = "/scratch/09313/vikram10/simulations/"
+    sim_dir = "/home/vik/code/simulations/"
     sim_long = SimDir(sim_dir + sim_name)
     hor_long = sim_long.horizons
     print("Read in", sim_name)
@@ -90,6 +127,8 @@ def plot_simulation(sim_name, output_num):
     binary_sep = horizon_separation.y[-1]
 
     t, m1, m2, mtot = get_mdot(sim_long, h1, h2)
+
+    time, vol1, vol2 = get_mhill(sim_dir + sim_name, output_num)
 
     # retrieve poyn flux data
     poyn = sim_long.ts.scalar["outflow_poyn_flux[7]"]
@@ -188,12 +227,21 @@ def plot_simulation(sim_name, output_num):
     ax.set_ylabel(r'$\dot{M}$')
     ax.legend(loc='upper right', fontsize=10, framealpha=0.5, ncols = 3)
 
-    # plotting poynting flux
+    # # plotting poynting flux
+    # ax = tseries_axs[1]
+    # ax.plot(poyn_t, poyn_y, color='m', lw=1.5)
+    # ax.set_xlabel(r'$t \, [M]$')
+    # ax.set_ylabel(r'$L_{poyn}$')
+    # ax.set_ylim(0, 0.01)
+
+    # plotting mhill volume integrals
     ax = tseries_axs[1]
-    ax.plot(poyn_t, poyn_y, color='m', lw=1.5)
+    ax.plot(time, vol1, color='b', lw=1.5, label=r'$M_{\rm hill, 1}$', alpha = 0.5)
+    ax.plot(time, vol2, color='r', lw=1.5, label=r'$M_{\rm hill, 2}$', alpha = 0.5)
+    ax.plot(time, vol1 + vol2, color='k', lw=1.5, label=r'$M_{\rm hill, total}$')
     ax.set_xlabel(r'$t \, [M]$')
-    ax.set_ylabel(r'$L_{poyn}$')
-    ax.set_ylim(0, 0.01)
+    ax.set_ylabel(r'$M_{\rm hill}$')
+    ax.legend(loc='upper right', fontsize=10, framealpha=0.5, ncols = 2)
 
     tseries.subplots_adjust(bottom=0.15, wspace=0.01, hspace = 0.3)
 
