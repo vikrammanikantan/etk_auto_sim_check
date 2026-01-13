@@ -57,7 +57,7 @@ def get_mhill(sim_dir, sim_name, output_num):
     
     for j in range(0,output_num):
         # print(j)
-        path = sim_dir + sim_name + "/output-00%.2d/%s/volume_integrals-GRMHD.asc"%(j, sim_name)
+        path = sim_dir + sim_name + "/output-0%.3d/%s/volume_integrals-GRMHD.asc"%(j, sim_name)
 
         try:
             f = open(path, 'r')
