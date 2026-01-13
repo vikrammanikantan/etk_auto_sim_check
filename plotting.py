@@ -128,7 +128,7 @@ def plot_simulation(sim_name, output_num):
 
     t, m1, m2, mtot = get_mdot(sim_long, h1, h2)
 
-    time, vol1, vol2 = get_mhill(sim_dir, sim_name, output_num)
+    volt, vol1, vol2 = get_mhill(sim_dir, sim_name, output_num)
 
     # retrieve poyn flux data
     poyn = sim_long.ts.scalar["outflow_poyn_flux[7]"]
@@ -236,9 +236,9 @@ def plot_simulation(sim_name, output_num):
 
     # plotting mhill volume integrals
     ax = tseries_axs[1]
-    ax.plot(time, vol1, color='b', lw=1.5, label=r'$M_{\rm hill, 1}$', alpha = 0.5)
-    ax.plot(time, vol2, color='r', lw=1.5, label=r'$M_{\rm hill, 2}$', alpha = 0.5)
-    ax.plot(time, vol1 + vol2, color='k', lw=1.5, label=r'$M_{\rm hill, total}$')
+    ax.plot(volt, vol1, color='b', lw=1.5, label=r'$M_{\rm hill, 1}$', alpha = 0.5)
+    ax.plot(volt, vol2, color='r', lw=1.5, label=r'$M_{\rm hill, 2}$', alpha = 0.5)
+    ax.plot(volt, vol1 + vol2, color='k', lw=1.5, label=r'$M_{\rm hill, total}$')
     ax.set_xlabel(r'$t \, [M]$')
     ax.set_ylabel(r'$M_{\rm hill}$')
     ax.legend(loc='upper right', fontsize=10, framealpha=0.5, ncols = 2)
