@@ -144,6 +144,9 @@ def plot_simulation(sim_name, output_num):
     h1 = hor[(0,1)]
     h2 = hor[(1,2)]
 
+    h1r = h1.ah.mean_radius.y[-1]
+    h2r = h2.ah.mean_radius.y[-1]
+
 
     # retrieve rho and smallb2 xy and xz vars
     reader_xy = sim.gridfunctions["xy"]
@@ -203,9 +206,9 @@ def plot_simulation(sim_name, output_num):
     ax.set_xlim([-0.75*binary_sep, 0.75*binary_sep])
     ax.set_ylim([-0.75*binary_sep, 0.75*binary_sep])
     ax.set_aspect('equal', 'box')
-    circle1 = plt.Circle((h1x[-1], h1y[-1]), 0.5, color='k', zorder  = 2)
+    circle1 = plt.Circle((h1x[-1], h1y[-1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
-    circle2 = plt.Circle((h2x[-1], h2y[-1]), 0.5, color='k', zorder  = 2)
+    circle2 = plt.Circle((h2x[-1], h2y[-1]), h2r, color='k', zorder  = 2)
     ax.add_patch(circle2)
 
     ax = hor_axs[1]
@@ -255,18 +258,18 @@ def plot_simulation(sim_name, output_num):
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$y$ [M]')
     arg_time1 = np.argmin(np.abs(h1t - time))
-    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), 0.5, color='k', zorder  = 2)
+    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
     arg_time2 = np.argmin(np.abs(h2t - time))
-    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), 0.5, color='k', zorder  = 2)
+    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), h2r, color='k', zorder  = 2)
     ax.add_patch(circle2)
 
     ax = rho_axs[1]
     im = ax.imshow(data_rho_xy/rho_max, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
     ax.set_xlabel(r'$x$ [M]')
-    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), 0.5, color='k', zorder  = 2)
+    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
-    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), 0.5, color='k', zorder  = 2)
+    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), h2r, color='k', zorder  = 2)
     ax.add_patch(circle2)
 
     ax = rho_axs[2]
@@ -288,17 +291,17 @@ def plot_simulation(sim_name, output_num):
     im = ax.imshow(data_smallb2_xy_zoom/data_rho_xy_zoom, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='magma')
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$y$ [M]')
-    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), 0.5, color='k', zorder  = 2)
+    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
-    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), 0.5, color='k', zorder  = 2)
+    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), h2r, color='k', zorder  = 2)
     ax.add_patch(circle2)
 
     ax = mag_axs[1]
     im = ax.imshow(data_smallb2_xy/data_rho_xy, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='magma')
     ax.set_xlabel(r'$x$ [M]')
-    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), 0.5, color='k', zorder  = 2)
+    circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
-    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), 0.5, color='k', zorder  = 2)
+    circle2 = plt.Circle((h2x[arg_time2], h2y[arg_time2]), h2r, color='k', zorder  = 2)
     ax.add_patch(circle2)
 
     ax = mag_axs[2]
