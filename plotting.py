@@ -77,7 +77,8 @@ def get_mhill(sim_dir, sim_name, output_num):
             vol1 = np.concatenate((vol1, data[:, 1]), dtype=float)
             vol2 = np.concatenate((vol2, data[:, 2]), dtype=float)
 
-
+    if vol1==None or vol2==None:
+        return 0, 0, 0
     vol_norm = np.mean(vol1 + vol2)
 
     return time, vol1/vol_norm, vol2/vol_norm
@@ -104,7 +105,7 @@ def interp_2d_data(var, iteration, resolution, xmax, resample = True):
     return time, coordinates, data_ufg_resample.data_xyz
 
 
-def plot_simulation(sim_name, output_num):
+def plot_simulation(sim_name, output_num, initial_data = False, plasma_beta=False):
     plt.style.use('plotting.mplstyle')
     box = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='white', alpha=0.5, ec = 'None', )
     box_inv = dict(boxstyle = 'round, pad=0.25, rounding_size=0.25', facecolor='k', alpha=0.5, ec = 'None', )
@@ -154,8 +155,14 @@ def plot_simulation(sim_name, output_num):
 
     var_rho_xy = reader_xy["rho_b"]
     var_rho_xz = reader_xz["rho_b"]
-    var_smallb2_xy = reader_xy["smallb2"]
-    var_smallb2_xz = reader_xz["smallb2"]
+    print(reader_xy.keys())
+    if not plasma_beta:
+        var_smallb2_xy = reader_xy["smallb2"]
+        var_smallb2_xz = reader_xz["smallb2"]
+    else:
+        var_smallb2_xy = reader_xy["magP_gasP_ratio"]
+        var_smallb2_xz = reader_xz["magP_gasP_ratio"]
+
 
 
     # get interpolated data
@@ -166,19 +173,21 @@ def plot_simulation(sim_name, output_num):
     x1 = [xmax,xmax]
     resample = True
 
-    time, coordinates, data_rho_xy = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[-1], resolution, xmax, resample)
+    it = -2
 
-    data_rho_xz = interp_2d_data(var_rho_xz, var_rho_xz.available_iterations[-1], resolution, xmax, resample)[2]
-    data_smallb2_xy = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[-1], resolution, xmax, resample)[2]
-    data_smallb2_xz = interp_2d_data(var_smallb2_xz, var_smallb2_xz.available_iterations[-1], resolution, xmax, resample)[2]
+    time, coordinates, data_rho_xy = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[it * (not initial_data)], resolution, xmax, resample)
+
+    data_rho_xz = interp_2d_data(var_rho_xz, var_rho_xz.available_iterations[it * (not initial_data)], resolution, xmax, resample)[2]
+    data_smallb2_xy = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[it * (not initial_data)], resolution, xmax, resample)[2]
+    data_smallb2_xz = interp_2d_data(var_smallb2_xz, var_smallb2_xz.available_iterations[it * (not initial_data)], resolution, xmax, resample)[2]
 
     # zoomed data
     xmax = binary_sep
     x0_zoom = [-xmax,-xmax]
     x1_zoom = [xmax,xmax]
 
-    data_rho_xy_zoom = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[-1], resolution, xmax, resample)[2]
-    data_smallb2_xy_zoom = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[-1], resolution, xmax, resample)[2]
+    data_rho_xy_zoom = interp_2d_data(var_rho_xy, var_rho_xy.available_iterations[it * (not initial_data)], resolution, xmax, resample)[2]
+    data_smallb2_xy_zoom = interp_2d_data(var_smallb2_xy, var_smallb2_xy.available_iterations[it * (not initial_data)], resolution, xmax, resample)[2]
 
 
     #### MAKING THE FIGURE ####
@@ -251,8 +260,9 @@ def plot_simulation(sim_name, output_num):
     # plotting rho
     vmin = 1e-5
     vmax = 1e0
-    rho_max = 0.14857958181952735
-    rho_max = 0.07747234381778716
+    rho_max = 0.14857958181952735 #DISK_A30
+    #rho_max = 0.07747234381778716 # new sims
+    #rho_max = 1.0
     ax = rho_axs[0]
     im = ax.imshow(data_rho_xy_zoom/rho_max, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='CMRmap')
     ax.set_xlabel(r'$x$ [M]')
@@ -287,8 +297,23 @@ def plot_simulation(sim_name, output_num):
     vmin = 1e-6
     vmax = 1e1
 
+    if plasma_beta:
+        vmin = 1e-3
+        vmax = 1e3
+        cmap = 'RdBu'
+        xy_plot_zoom = 1/data_smallb2_xy_zoom
+        xy_plot = 1/data_smallb2_xy
+        xz_plot = 1/data_smallb2_xz
+
+        print("Minimum plasma beta is ", np.min(xz_plot * (data_rho_xz > 1e-2)))
+    else:
+        cmap = "magma"
+        xy_plot_zoom = data_smallb2_xy_zoom / data_rho_xy_zoom
+        xy_plot = data_smallb2_xy / data_rho_xy
+        xz_plot = data_smallb2_xz / data_rho_xz
+
     ax = mag_axs[0]
-    im = ax.imshow(data_smallb2_xy_zoom/data_rho_xy_zoom, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap='magma')
+    im = ax.imshow(xy_plot_zoom, norm='log', origin='lower', extent=[x0_zoom[0], x1_zoom[0], x0_zoom[1], x1_zoom[1]], vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$y$ [M]')
     circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
@@ -297,7 +322,7 @@ def plot_simulation(sim_name, output_num):
     ax.add_patch(circle2)
 
     ax = mag_axs[1]
-    im = ax.imshow(data_smallb2_xy/data_rho_xy, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='magma')
+    im = ax.imshow(xy_plot, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xlabel(r'$x$ [M]')
     circle1 = plt.Circle((h1x[arg_time1], h1y[arg_time1]), h1r, color='k', zorder  = 2)
     ax.add_patch(circle1)
@@ -305,7 +330,7 @@ def plot_simulation(sim_name, output_num):
     ax.add_patch(circle2)
 
     ax = mag_axs[2]
-    im2 = ax.imshow(data_smallb2_xz/data_rho_xz, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap='magma')
+    im2 = ax.imshow(xz_plot, norm='log', origin='lower', extent=[x0[0], x1[0], x0[1], x1[1]], vmin=vmin, vmax=vmax, cmap=cmap)
     ax.set_xlabel(r'$x$ [M]')
     ax.set_ylabel(r'$z$ [M]')
     ax.yaxis.set_label_position("right")
@@ -314,7 +339,8 @@ def plot_simulation(sim_name, output_num):
 
     cbar = fig.colorbar(im, ax=mag_axs, orientation='horizontal', pad=0.05, shrink = 1, aspect = 50, location='top')
     cbar.ax.set_title(r'$b^2/\rho_0$')
-
+    if plasma_beta:
+        cbar.ax.set_title(r'$\beta$')
     plt.savefig("%s_%s.pdf"%(sim_name, str(output_num).zfill(4)), bbox_inches='tight')
 
     return

@@ -17,7 +17,7 @@ import sys
 sim_name = sys.argv[1]
 output_num = int(sys.argv[2])
 
-plotting.plot_simulation(sim_name, output_num)
+plotting.plot_simulation(sim_name, output_num, initial_data = False, plasma_beta = True)
 
 # -------- USER INPUT ----------
 RECIPIENT_EMAIL = RECIPIENT_EMAIL
